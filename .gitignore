@@ -33,6 +33,9 @@ env/
 
 # Output
 output/
+samples/
+api_test_*/
+test_output/
 *.pdf
 *.png
 *.jpg
