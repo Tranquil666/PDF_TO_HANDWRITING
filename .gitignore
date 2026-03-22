@@ -36,10 +36,13 @@ output/
 samples/
 api_test_*/
 test_output/
+web_output/
+uploads/
 *.pdf
 *.png
 *.jpg
 *.jpeg
+*.zip
 
 # Temporary files
 tmp/
