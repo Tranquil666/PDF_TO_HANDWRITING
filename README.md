@@ -13,6 +13,7 @@ A Python tool that converts PDF documents to handwriting-style images. This tool
 - ✅ Multiple page output support
 - ✅ High-quality 300 DPI output
 - ✅ Command-line interface
+- ✅ **Web interface for live testing** 🆕
 - ✅ Error handling and validation
 
 ## Installation
@@ -30,7 +31,28 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Basic Usage
+### Web Interface (Recommended for Testing)
+
+Start the live web server for an easy-to-use browser interface:
+
+```bash
+python app.py
+```
+
+Then open your browser to `http://localhost:5000`
+
+Features:
+- 🎨 Beautiful, intuitive interface
+- 📤 Drag-and-drop file upload
+- ⚙️ Real-time settings configuration
+- 💾 Automatic download of converted images
+- 📱 Mobile-friendly responsive design
+
+For detailed web interface documentation, see [WEB_INTERFACE.md](WEB_INTERFACE.md)
+
+### Command-Line Interface
+
+#### Basic Usage
 
 Convert a PDF to handwriting images:
 ```bash
@@ -39,7 +61,7 @@ python pdf_to_handwriting.py input.pdf
 
 This will create handwriting-style images in the `output/` directory.
 
-### Advanced Options
+#### Advanced Options
 
 ```bash
 python pdf_to_handwriting.py input.pdf \
@@ -53,7 +75,7 @@ python pdf_to_handwriting.py input.pdf \
     --margin 250
 ```
 
-### Command-Line Arguments
+#### Command-Line Arguments
 
 - `pdf_path` - Path to input PDF file (required)
 - `-o, --output-dir` - Output directory (default: `output`)
