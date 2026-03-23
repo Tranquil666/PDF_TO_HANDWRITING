@@ -1,0 +1,55 @@
+# Development files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Local directories (not needed on Vercel)
+uploads/
+web_output/
+output/
+samples/
+
+# Test files
+test_api.py
+create_sample_pdf.py
+create_style_samples.py
+
+# Documentation (keep README.md but exclude others if needed)
+QUICKSTART.md
+FEATURES.md
+PROJECT_SUMMARY.md
+WEB_INTERFACE.md
+
+# Git
+.git/
+.gitignore
+
+# Local Flask app (we're using serverless functions)
+app.py
+templates/

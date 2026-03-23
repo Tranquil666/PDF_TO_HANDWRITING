@@ -1,0 +1,310 @@
+"""
+Index page endpoint for Vercel deployment
+Serves the main HTML interface for PDF to Handwriting converter
+"""
+from http.server import BaseHTTPRequestHandler
+
+
+# HTML content - embedded directly to avoid template loading issues
+HTML_CONTENT = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Handwriting Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: #f8f9ff;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .upload-label:hover {
+            transform: scale(1.05);
+        }
+
+        .file-name {
+            margin-top: 15px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .settings {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .settings h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            transform: scale(1.02);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .flash-message {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .flash-error {
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .flash-success {
+            background-color: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✍️ PDF to Handwriting</h1>
+        <p class="subtitle">Convert your PDFs to handwriting-style images</p>
+
+        <form method="POST" action="/convert" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-section">
+                <div class="upload-icon">📄</div>
+                <label for="pdf_file" class="upload-label">Choose PDF File</label>
+                <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required>
+                <div class="file-name" id="fileName"></div>
+            </div>
+
+            <div class="settings">
+                <h3>⚙️ Conversion Settings</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="font_size">Font Size (px)</label>
+                        <input type="number" id="font_size" name="font_size" value="28" min="12" max="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="line_spacing">Line Spacing (px)</label>
+                        <input type="number" id="line_spacing" name="line_spacing" value="40" min="20" max="80">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="margin">Margin (px)</label>
+                        <input type="number" id="margin" name="margin" value="200" min="50" max="400">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="color">Text Color (R,G,B)</label>
+                        <input type="text" id="color" name="color" value="0,0,139" pattern="^\\d{1,3},\\d{1,3},\\d{1,3}$">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="bg_color">Background Color (R,G,B,A)</label>
+                    <input type="text" id="bg_color" name="bg_color" value="255,255,255,255" pattern="^\\d{1,3},\\d{1,3},\\d{1,3},\\d{1,3}$">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                🚀 Convert to Handwriting
+            </button>
+
+            <div class="info-box">
+                <strong>💡 Tips:</strong>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li>Max file size: 16MB</li>
+                    <li>Only text-based PDFs are supported</li>
+                    <li>Use blue color (0,0,139) for authentic handwriting look</li>
+                    <li>Multiple pages will be downloaded as a ZIP file</li>
+                </ul>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('pdf_file');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                fileName.textContent = '✅ ' + e.target.files[0].name;
+            } else {
+                fileName.textContent = '';
+            }
+        });
+
+        uploadForm.addEventListener('submit', function(e) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Converting... Please wait...';
+        });
+    </script>
+</body>
+</html>
+"""
+
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        """Serve the main HTML page"""
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(HTML_CONTENT.encode('utf-8'))
+        return
